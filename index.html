@@ -1,0 +1,3364 @@
+html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>NEXUS — Infrastructure Intelligence</title>
+  <meta
+    name="description"
+    content="NEXUS — интеллектуальная система мониторинга инфраструктуры в реальном времени."
+  >
+
+  <style>
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: #050607;
+      color: #f1f5f4;
+      overflow-x: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    ::selection {
+      background: #b6ff00;
+      color: #050607;
+    }
+
+
+    /* =========================================================
+       VARIABLES
+    ========================================================= */
+
+    :root {
+      --bg: #050607;
+      --surface: #0b0e0f;
+      --surface-2: #101415;
+      --border: rgba(255,255,255,.1);
+      --border-bright: rgba(255,255,255,.2);
+
+      --text: #f1f5f4;
+      --muted: #7d8788;
+      --muted-2: #566062;
+
+      --lime: #b6ff00;
+      --lime-dark: #6e9e00;
+
+      --purple: #8d65ff;
+      --cyan: #48e8ff;
+      --red: #ff4f6d;
+
+      --container: 1380px;
+    }
+
+
+    /* =========================================================
+       GLOBAL
+    ========================================================= */
+
+    .container {
+      width: min(var(--container), calc(100% - 48px));
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      color: var(--lime);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 15px var(--lime);
+    }
+
+    .section {
+      padding: 150px 0;
+      position: relative;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 40px;
+      margin-bottom: 70px;
+    }
+
+    .section-title {
+      max-width: 850px;
+      font-size: clamp(42px, 6vw, 86px);
+      line-height: .94;
+      letter-spacing: -.055em;
+      font-weight: 700;
+    }
+
+    .section-description {
+      max-width: 360px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+
+    /* =========================================================
+       BACKGROUND
+    ========================================================= */
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .025;
+      z-index: 100;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+    }
+
+    .grid-background {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .25;
+
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+
+      background-size: 70px 70px;
+
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    .glow {
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(120px);
+      opacity: .08;
+    }
+
+    .glow.green {
+      background: var(--lime);
+    }
+
+    .glow.purple {
+      background: var(--purple);
+    }
+
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+
+      border-bottom: 1px solid transparent;
+      transition: .35s ease;
+    }
+
+    header.scrolled {
+      background: rgba(5,6,7,.82);
+      backdrop-filter: blur(18px);
+      border-color: var(--border);
+    }
+
+    .header-inner {
+      height: 78px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .logo-mark {
+      width: 27px;
+      height: 27px;
+      position: relative;
+
+      border: 2px solid var(--lime);
+      transform: rotate(45deg);
+    }
+
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      background: var(--lime);
+    }
+
+    nav {
+      display: flex;
+      gap: 32px;
+    }
+
+    nav a {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      transition: .25s ease;
+    }
+
+    nav a:hover {
+      color: white;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 10px var(--lime);
+    }
+
+    .menu-button {
+      display: none;
+      background: transparent;
+      color: white;
+      font-size: 24px;
+    }
+
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+
+      min-height: 48px;
+      padding: 0 22px;
+
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+
+      transition: .25s ease;
+    }
+
+    .btn-primary {
+      background: var(--lime);
+      color: #050607;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(182,255,0,.25);
+    }
+
+    .btn-outline {
+      border: 1px solid var(--border-bright);
+      background: transparent;
+      color: white;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--lime);
+      color: var(--lime);
+    }
+
+
+    /* =========================================================
+       HERO
+    ========================================================= */
+
+    .hero {
+      min-height: 100vh;
+      padding-top: 78px;
+
+      display: flex;
+      align-items: center;
+
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 70px;
+      align-items: center;
+
+      padding: 90px 0;
+    }
+
+    .hero-title {
+      max-width: 1000px;
+
+      margin: 25px 0;
+
+      font-size: clamp(70px, 10vw, 160px);
+      line-height: .82;
+      letter-spacing: -.075em;
+      font-weight: 800;
+    }
+
+    .hero-title span {
+      color: var(--lime);
+    }
+
+    .hero-text {
+      max-width: 600px;
+
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 38px;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .hero-meta-item {
+      border-left: 1px solid var(--border);
+      padding-left: 15px;
+    }
+
+    .hero-meta-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .hero-meta-label {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-top: 5px;
+    }
+
+
+    /* =========================================================
+       TERMINAL
+    ========================================================= */
+
+    .terminal {
+      position: relative;
+
+      background: rgba(10,13,14,.8);
+      border: 1px solid var(--border);
+
+      box-shadow:
+        0 30px 100px rgba(0,0,0,.5),
+        inset 0 0 80px rgba(182,255,0,.025);
+
+      overflow: hidden;
+    }
+
+    .terminal::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+
+      background:
+        linear-gradient(rgba(182,255,0,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(182,255,0,.035) 1px, transparent 1px);
+
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .terminal-top {
+      height: 42px;
+      border-bottom: 1px solid var(--border);
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 0 15px;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .terminal-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted-2);
+    }
+
+    .terminal-name {
+      color: var(--muted);
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    .terminal-body {
+      position: relative;
+      z-index: 1;
+      padding: 28px;
+
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 2;
+    }
+
+    .terminal-line {
+      color: var(--muted);
+    }
+
+    .terminal-line .green {
+      color: var(--lime);
+    }
+
+    .terminal-line .purple {
+      color: var(--purple);
+    }
+
+    .terminal-line .cyan {
+      color: var(--cyan);
+    }
+
+    .terminal-line .white {
+      color: white;
+    }
+
+    .terminal-chart {
+      margin-top: 20px;
+      height: 100px;
+      display: flex;
+      align-items: end;
+      gap: 4px;
+    }
+
+    .terminal-bar {
+      flex: 1;
+      background: var(--lime);
+      opacity: .65;
+      min-height: 5px;
+      animation: bars 1.5s ease-in-out infinite alternate;
+    }
+
+    .terminal-bar:nth-child(2n) {
+      animation-delay: .2s;
+    }
+
+    .terminal-bar:nth-child(3n) {
+      animation-delay: .4s;
+    }
+
+    @keyframes bars {
+      from {
+        transform: scaleY(.4);
+        opacity: .25;
+      }
+      to {
+        transform: scaleY(1);
+        opacity: .8;
+      }
+    }
+
+
+    /* =========================================================
+       MARQUEE
+    ========================================================= */
+
+    .marquee {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .marquee-track {
+      display: inline-flex;
+      gap: 50px;
+      padding: 22px 0;
+
+      animation: marquee 25s linear infinite;
+    }
+
+    .marquee span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .marquee span:nth-child(even) {
+      color: var(--lime);
+    }
+
+    @keyframes marquee {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+
+    /* =========================================================
+       METRICS
+    ========================================================= */
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+    }
+
+    .metric {
+      min-height: 210px;
+      padding: 30px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-number {
+      font-size: clamp(42px, 5vw, 70px);
+      font-weight: 700;
+      letter-spacing: -.06em;
+    }
+
+    .metric-unit {
+      color: var(--lime);
+      font-size: 16px;
+      margin-left: 5px;
+    }
+
+    .metric-label {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .metric-line {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      bottom: 28px;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .metric-line::after {
+      content: "";
+      display: block;
+      width: 65%;
+      height: 1px;
+      background: var(--lime);
+    }
+
+
+    /* =========================================================
+       DASHBOARD
+    ========================================================= */
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1.6fr .8fr;
+      gap: 15px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .panel-header {
+      min-height: 58px;
+      padding: 0 20px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .panel-meta {
+      color: var(--muted);
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    .chart-area {
+      height: 390px;
+      padding: 30px;
+
+      position: relative;
+
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+
+      background-size: 55px 55px;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .chart-path {
+      fill: none;
+      stroke: var(--lime);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      filter: drop-shadow(0 0 8px rgba(182,255,0,.4));
+    }
+
+    .chart-fill {
+      fill: url(#chartGradient);
+      opacity: .12;
+    }
+
+    .chart-dot {
+      fill: var(--lime);
+      filter: drop-shadow(0 0 8px var(--lime));
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      display: none;
+
+      padding: 10px 12px;
+      background: #121718;
+      border: 1px solid var(--border-bright);
+
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .health {
+      padding: 30px;
+      flex: 1;
+    }
+
+    .health-circle {
+      width: 160px;
+      height: 160px;
+      margin: 20px auto 30px;
+
+      border-radius: 50%;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      border: 1px solid var(--lime);
+      box-shadow:
+        0 0 50px rgba(182,255,0,.08),
+        inset 0 0 40px rgba(182,255,0,.04);
+    }
+
+    .health-value {
+      font-size: 45px;
+      font-weight: 700;
+      letter-spacing: -.06em;
+    }
+
+    .health-label {
+      color: var(--lime);
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .health-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .health-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--lime);
+    }
+
+    .health-status::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--lime);
+    }
+
+
+    /* =========================================================
+       SERVERS
+    ========================================================= */
+
+    .server-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filter {
+      padding: 10px 15px;
+
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+
+      transition: .2s ease;
+    }
+
+    .filter:hover,
+    .filter.active {
+      color: var(--lime);
+      border-color: var(--lime);
+    }
+
+    .servers {
+      border-top: 1px solid var(--border);
+    }
+
+    .server {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr .7fr .8fr 80px;
+      gap: 20px;
+
+      align-items: center;
+
+      min-height: 85px;
+      padding: 0 20px;
+
+      border-bottom: 1px solid var(--border);
+
+      transition: .25s ease;
+    }
+
+    .server:hover {
+      background: rgba(182,255,0,.025);
+    }
+
+    .server-name {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .server-location {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .server-value {
+      color: var(--muted);
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .server-load {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .load-bar {
+      width: 70px;
+      height: 3px;
+      background: #202627;
+    }
+
+    .load-fill {
+      height: 100%;
+      background: var(--lime);
+    }
+
+    .server-status {
+      color: var(--lime);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .server-status.warning {
+      color: #ffc857;
+    }
+
+    .server-status.offline {
+      color: var(--red);
+    }
+
+
+    /* =========================================================
+       FEATURES
+    ========================================================= */
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+    }
+
+    .feature {
+      min-height: 330px;
+      padding: 30px;
+
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+
+      transition: .3s ease;
+    }
+
+    .feature:hover {
+      background: var(--surface);
+      transform: translateY(-4px);
+    }
+
+    .feature-number {
+      color: var(--muted-2);
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .feature-icon {
+      width: 45px;
+      height: 45px;
+      margin: 50px 0 35px;
+
+      display: grid;
+      place-items: center;
+
+      border: 1px solid var(--border-bright);
+      color: var(--lime);
+      font-size: 18px;
+    }
+
+    .feature-title {
+      font-size: 22px;
+      letter-spacing: -.03em;
+    }
+
+    .feature-text {
+      max-width: 330px;
+      margin-top: 12px;
+
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+
+    /* =========================================================
+       PRICING
+    ========================================================= */
+
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .price-card {
+      padding: 35px;
+
+      border: 1px solid var(--border);
+      background: var(--surface);
+
+      position: relative;
+      transition: .3s ease;
+    }
+
+    .price-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-bright);
+    }
+
+    .price-card.featured {
+      border-color: var(--lime);
+    }
+
+    .price-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+
+      padding: 6px 8px;
+
+      color: #050607;
+      background: var(--lime);
+
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .price-name {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .price {
+      margin: 30px 0 8px;
+
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -.06em;
+    }
+
+    .price small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .price-description {
+      min-height: 50px;
+
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .price-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+
+      margin: 35px 0;
+      padding-top: 25px;
+
+      border-top: 1px solid var(--border);
+    }
+
+    .price-list li {
+      list-style: none;
+
+      display: flex;
+      gap: 10px;
+
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .price-list li::before {
+      content: "✓";
+      color: var(--lime);
+    }
+
+    .price-card .btn {
+      width: 100%;
+    }
+
+
+    /* =========================================================
+       FAQ
+    ========================================================= */
+
+    .faq {
+      max-width: 950px;
+      margin-left: auto;
+    }
+
+    .faq-item {
+      border-top: 1px solid var(--border);
+    }
+
+    .faq-item:last-child {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .faq-question {
+      width: 100%;
+      padding: 28px 0;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      background: transparent;
+      color: white;
+
+      text-align: left;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .faq-plus {
+      color: var(--lime);
+      font-size: 22px;
+      transition: .25s ease;
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+
+      transition: .35s ease;
+    }
+
+    .faq-answer-inner {
+      padding-bottom: 0;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 200px;
+    }
+
+    .faq-item.open .faq-answer-inner {
+      padding-bottom: 25px;
+    }
+
+    .faq-item.open .faq-plus {
+      transform: rotate(45deg);
+    }
+
+
+    /* =========================================================
+       CTA
+    ========================================================= */
+
+    .cta {
+      position: relative;
+      overflow: hidden;
+
+      padding: 120px 0;
+
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+    }
+
+    .cta-title {
+      margin: 25px 0;
+
+      font-size: clamp(55px, 8vw, 120px);
+      line-height: .85;
+      letter-spacing: -.07em;
+    }
+
+    .cta-text {
+      max-width: 550px;
+
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .cta .btn {
+      margin-top: 35px;
+    }
+
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    footer {
+      padding: 35px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .footer-copy {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 25px;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .footer-links a:hover {
+      color: var(--lime);
+    }
+
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+
+      padding: 25px;
+
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(12px);
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-box {
+      width: min(560px, 100%);
+
+      padding: 35px;
+
+      background: #0b0e0f;
+      border: 1px solid var(--border-bright);
+
+      box-shadow: 0 40px 100px rgba(0,0,0,.6);
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      margin-bottom: 30px;
+    }
+
+    .modal-title {
+      font-size: 28px;
+      letter-spacing: -.04em;
+    }
+
+    .modal-close {
+      background: transparent;
+      color: var(--muted);
+      font-size: 25px;
+    }
+
+    .modal-close:hover {
+      color: white;
+    }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form input {
+      width: 100%;
+      height: 52px;
+
+      padding: 0 15px;
+
+      background: #050607;
+      border: 1px solid var(--border);
+      color: white;
+
+      outline: none;
+    }
+
+    .form input:focus {
+      border-color: var(--lime);
+    }
+
+    .form .btn {
+      margin-top: 10px;
+    }
+
+    .form-note {
+      margin-top: 15px;
+
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 1100px) {
+
+      .hero-content {
+        grid-template-columns: 1fr;
+      }
+
+      .terminal {
+        max-width: 650px;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        min-height: 400px;
+      }
+
+      .features {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pricing {
+        grid-template-columns: 1fr;
+      }
+
+      .price-card {
+        max-width: 600px;
+      }
+    }
+
+
+    @media (max-width: 760px) {
+
+      .container {
+        width: min(100% - 30px, var(--container));
+      }
+
+      .section {
+        padding: 90px 0;
+      }
+
+      .section-heading {
+        display: block;
+        margin-bottom: 45px;
+      }
+
+      .section-description {
+        margin-top: 20px;
+      }
+
+      nav,
+      .header-actions {
+        display: none;
+      }
+
+      .menu-button {
+        display: block;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-content {
+        padding: 100px 0 70px;
+        gap: 50px;
+      }
+
+      .hero-title {
+        font-size: clamp(64px, 19vw, 100px);
+      }
+
+      .hero-text {
+        font-size: 14px;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+      }
+
+      .hero-buttons .btn {
+        width: 100%;
+      }
+
+      .hero-meta {
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        min-height: 170px;
+        padding: 20px;
+      }
+
+      .metric-number {
+        font-size: 42px;
+      }
+
+      .chart-area {
+        height: 280px;
+        padding: 15px;
+      }
+
+      .server {
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+
+        padding: 18px 15px;
+      }
+
+      .server > div:nth-child(2),
+      .server > div:nth-child(3) {
+        display: none;
+      }
+
+      .server-load {
+        justify-content: end;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+      }
+
+      .feature {
+        min-height: 280px;
+      }
+
+      .feature-icon {
+        margin-top: 40px;
+      }
+
+      .pricing {
+        gap: 10px;
+      }
+
+      .price-card {
+        padding: 25px;
+      }
+
+      .faq-question {
+        font-size: 14px;
+      }
+
+      .cta {
+        padding: 90px 0;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .footer-links {
+        flex-wrap: wrap;
+      }
+
+      .modal-box {
+        padding: 25px;
+      }
+    }
+
+    @media (max-width: 420px) {
+
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-meta {
+        flex-direction: column;
+      }
+
+      .hero-meta-item {
+        width: 100%;
+      }
+
+      .terminal-body {
+        padding: 20px;
+        font-size: 10px;
+      }
+    }
+
+
+    /* =========================================================
+       REVEAL ANIMATION
+    ========================================================= */
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(35px);
+      transition:
+        opacity .8s ease,
+        transform .8s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="noise"></div>
+
+  <!-- =======================================================
+       HEADER
+  ======================================================== -->
+
+  <header id="header">
+    <div class="container header-inner">
+
+      <a href="#" class="logo">
+        <span class="logo-mark"></span>
+        NEXUS
+      </a>
+
+      <nav>
+        <a href="#platform">Platform</a>
+        <a href="#servers">Infrastructure</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+
+      <div class="header-actions">
+        <div class="status">
+          <span class="status-dot"></span>
+          All systems operational
+        </div>
+
+        <button class="btn btn-primary open-modal">
+          Start monitoring
+        </button>
+      </div>
+
+      <button class="menu-button" id="menuButton">
+        ☰
+      </button>
+
+    </div>
+  </header>
+
+
+  <!-- =======================================================
+       HERO
+  ======================================================== -->
+
+  <main>
+
+    <section class="hero">
+
+      <div class="grid-background"></div>
+
+      <div
+        class="glow green"
+        style="top:-250px; right:-250px;"
+      ></div>
+
+      <div class="container hero-content">
+
+        <div class="reveal">
+
+          <div class="eyebrow">
+            Infrastructure intelligence
+          </div>
+
+          <h1 class="hero-title">
+            SEE<br>
+            <span>EVERYTHING.</span>
+          </h1>
+
+          <p class="hero-text">
+            NEXUS gives engineering teams complete visibility
+            across servers, applications and infrastructure —
+            in real time, from one command center.
+          </p>
+
+          <div class="hero-buttons">
+            <button class="btn btn-primary open-modal">
+              Start monitoring →
+            </button>
+
+            <a href="#platform" class="btn btn-outline">
+              Explore platform
+            </a>
+          </div>
+
+          <div class="hero-meta">
+
+            <div class="hero-meta-item">
+              <div class="hero-meta-value">99.99%</div>
+              <div class="hero-meta-label">Platform uptime</div>
+            </div>
+
+            <div class="hero-meta-item">
+              <div class="hero-meta-value">42ms</div>
+              <div class="hero-meta-label">Avg. response</div>
+            </div>
+
+            <div class="hero-meta-item">
+              <div class="hero-meta-value">24/7</div>
+              <div class="hero-meta-label">Monitoring</div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="terminal reveal">
+
+          <div class="terminal-top">
+
+            <div class="terminal-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <div class="terminal-name">
+              nexus-monitor / live
+            </div>
+
+          </div>
+
+          <div class="terminal-body">
+
+            <div class="terminal-line">
+              <span class="green">root@nexus</span>:~$
+              system status
+            </div>
+
+            <div class="terminal-line">
+              &nbsp;
+            </div>
+
+            <div class="terminal-line">
+              infrastructure:
+              <span class="white">ONLINE</span>
+            </div>
+
+            <div class="terminal-line">
+              nodes:
+              <span class="cyan">247</span>
+            </div>
+
+            <div class="terminal-line">
+              active alerts:
+              <span class="green">0</span>
+            </div>
+
+            <div class="terminal-line">
+              uptime:
+              <span class="green">99.998%</span>
+            </div>
+
+            <div class="terminal-line">
+              latency:
+              <span class="purple">18ms</span>
+            </div>
+
+            <div class="terminal-line">
+              &nbsp;
+            </div>
+
+            <div class="terminal-line">
+              <span class="green">
+                █ system operational
+              </span>
+            </div>
+
+            <div class="terminal-chart">
+
+              <div class="terminal-bar" style="height:35%"></div>
+              <div class="terminal-bar" style="height:55%"></div>
+              <div class="terminal-bar" style="height:42%"></div>
+              <div class="terminal-bar" style="height:75%"></div>
+              <div class="terminal-bar" style="height:58%"></div>
+              <div class="terminal-bar" style="height:88%"></div>
+              <div class="terminal-bar" style="height:64%"></div>
+              <div class="terminal-bar" style="height:94%"></div>
+              <div class="terminal-bar" style="height:72%"></div>
+              <div class="terminal-bar" style="height:82%"></div>
+              <div class="terminal-bar" style="height:65%"></div>
+              <div class="terminal-bar" style="height:90%"></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         MARQUEE
+    ====================================================== -->
+
+    <div class="marquee">
+
+      <div class="marquee-track">
+
+        <span>Real-time observability</span>
+        <span>●</span>
+        <span>Zero blind spots</span>
+        <span>●</span>
+        <span>Infrastructure intelligence</span>
+        <span>●</span>
+        <span>Real-time observability</span>
+        <span>●</span>
+        <span>Zero blind spots</span>
+        <span>●</span>
+        <span>Infrastructure intelligence</span>
+        <span>●</span>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         METRICS
+    ====================================================== -->
+
+    <section class="section" id="platform">
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <div>
+
+            <div class="eyebrow">
+              Live infrastructure
+            </div>
+
+            <h2 class="section-title">
+              Your infrastructure.<br>
+              One source of truth.
+            </h2>
+
+          </div>
+
+          <p class="section-description">
+            Monitor every layer of your stack from one
+            unified command center. NEXUS transforms
+            thousands of signals into information your team
+            can act on.
+          </p>
+
+        </div>
+
+
+        <div class="metrics-grid reveal">
+
+          <div class="metric">
+            <div class="metric-number">
+              <span data-counter="247">0</span>
+            </div>
+
+            <div class="metric-label">
+              Active nodes
+            </div>
+
+            <div class="metric-line"></div>
+          </div>
+
+
+          <div class="metric">
+            <div class="metric-number">
+              <span data-counter="18">0</span><span class="metric-unit">ms</span>
+            </div>
+
+            <div class="metric-label">
+              Average latency
+            </div>
+
+            <div class="metric-line"></div>
+          </div>
+
+
+          <div class="metric">
+            <div class="metric-number">
+              <span data-counter="99.99">0</span><span class="metric-unit">%</span>
+            </div>
+
+            <div class="metric-label">
+              Global uptime
+            </div>
+
+            <div class="metric-line"></div>
+          </div>
+
+
+          <div class="metric">
+            <div class="metric-number">
+              <span data-counter="0">0</span>
+            </div>
+
+            <div class="metric-label">
+              Critical incidents
+            </div>
+
+            <div class="metric-line"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+
+    <section class="section">
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <div>
+
+            <div class="eyebrow">
+              Observability
+            </div>
+
+            <h2 class="section-title">
+              Data that<br>
+              tells a story.
+            </h2>
+
+          </div>
+
+          <p class="section-description">
+            Understand system behavior before small
+            anomalies become major incidents.
+          </p>
+
+        </div>
+
+
+        <div class="dashboard reveal">
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div class="panel-title">
+                Network activity
+              </div>
+
+              <div class="panel-meta">
+                LAST 24 HOURS
+              </div>
+
+            </div>
+
+            <div class="chart-area">
+
+              <svg
+                class="chart-svg"
+                viewBox="0 0 900 300"
+                preserveAspectRatio="none"
+              >
+
+                <defs>
+
+                  <linearGradient
+                    id="chartGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stop-color="#b6ff00"
+                    />
+
+                    <stop
+                      offset="100%"
+                      stop-color="#b6ff00"
+                      stop-opacity="0"
+                    />
+
+                  </linearGradient>
+
+                </defs>
+
+                <path
+                  class="chart-fill"
+                  d="
+                    M0 260
+                    L80 230
+                    L160 245
+                    L240 180
+                    L320 200
+                    L400 130
+                    L480 165
+                    L560 90
+                    L640 130
+                    L720 70
+                    L800 105
+                    L900 45
+                    L900 300
+                    L0 300
+                    Z
+                  "
+                />
+
+                <path
+                  class="chart-path"
+                  d="
+                    M0 260
+                    L80 230
+                    L160 245
+                    L240 180
+                    L320 200
+                    L400 130
+                    L480 165
+                    L560 90
+                    L640 130
+                    L720 70
+                    L800 105
+                    L900 45
+                  "
+                />
+
+                <circle
+                  class="chart-dot"
+                  cx="900"
+                  cy="45"
+                  r="5"
+                />
+
+              </svg>
+
+            </div>
+
+          </div>
+
+
+          <div class="panel side-panel">
+
+            <div class="panel-header">
+
+              <div class="panel-title">
+                System health
+              </div>
+
+              <div class="panel-meta">
+                LIVE
+              </div>
+
+            </div>
+
+            <div class="health">
+
+              <div class="health-circle">
+
+                <div class="health-value">
+                  98.7
+                </div>
+
+                <div class="health-label">
+                  Health score
+                </div>
+
+              </div>
+
+              <div class="health-list">
+
+                <div class="health-row">
+                  <span>CPU</span>
+                  <span class="health-status">Normal</span>
+                </div>
+
+                <div class="health-row">
+                  <span>Memory</span>
+                  <span class="health-status">Normal</span>
+                </div>
+
+                <div class="health-row">
+                  <span>Network</span>
+                  <span class="health-status">Normal</span>
+                </div>
+
+                <div class="health-row">
+                  <span>Storage</span>
+                  <span class="health-status">Normal</span>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SERVERS
+    ====================================================== -->
+
+    <section class="section" id="servers">
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <div>
+
+            <div class="eyebrow">
+              Infrastructure
+            </div>
+
+            <h2 class="section-title">
+              Every node.<br>
+              Always visible.
+            </h2>
+
+          </div>
+
+          <p class="section-description">
+            Search, filter and inspect infrastructure
+            across every region from a single interface.
+          </p>
+
+        </div>
+
+
+        <div class="server-controls reveal">
+
+          <button
+            class="filter active"
+            data-filter="all"
+          >
+            All nodes
+          </button>
+
+          <button
+            class="filter"
+            data-filter="online"
+          >
+            Online
+          </button>
+
+          <button
+            class="filter"
+            data-filter="warning"
+          >
+            Warning
+          </button>
+
+          <button
+            class="filter"
+            data-filter="offline"
+          >
+            Offline
+          </button>
+
+        </div>
+
+
+        <div class="servers reveal">
+
+          <div
+            class="server"
+            data-status="online"
+          >
+
+            <div>
+              <div class="server-name">
+                NXS-EU-001
+              </div>
+
+              <div class="server-location">
+                Frankfurt / Germany
+              </div>
+            </div>
+
+            <div class="server-value">
+              192.168.10.24
+            </div>
+
+            <div class="server-value">
+              18ms
+            </div>
+
+            <div class="server-load">
+              <div class="load-bar">
+                <div
+                  class="load-fill"
+                  style="width:34%"
+                ></div>
+              </div>
+
+              <span class="server-value">
+                34%
+              </span>
+            </div>
+
+            <div class="server-status">
+              Online
+            </div>
+
+          </div>
+
+
+          <div
+            class="server"
+            data-status="online"
+          >
+
+            <div>
+              <div class="server-name">
+                NXS-US-014
+              </div>
+
+              <div class="server-location">
+                Virginia / USA
+              </div>
+            </div>
+
+            <div class="server-value">
+              10.42.8.91
+            </div>
+
+            <div class="server-value">
+              24ms
+            </div>
+
+            <div class="server-load">
+              <div class="load-bar">
+                <div
+                  class="load-fill"
+                  style="width:52%"
+                ></div>
+              </div>
+
+              <span class="server-value">
+                52%
+              </span>
+            </div>
+
+            <div class="server-status">
+              Online
+            </div>
+
+          </div>
+
+
+          <div
+            class="server"
+            data-status="warning"
+          >
+
+            <div>
+              <div class="server-name">
+                NXS-AS-007
+              </div>
+
+              <div class="server-location">
+                Singapore / Asia
+              </div>
+            </div>
+
+            <div class="server-value">
+              172.16.4.18
+            </div>
+
+            <div class="server-value">
+              82ms
+            </div>
+
+            <div class="server-load">
+              <div class="load-bar">
+                <div
+                  class="load-fill"
+                  style="width:84%"
+                ></div>
+              </div>
+
+              <span class="server-value">
+                84%
+              </span>
+            </div>
+
+            <div class="server-status warning">
+              Warning
+            </div>
+
+          </div>
+
+
+          <div
+            class="server"
+            data-status="online"
+          >
+
+            <div>
+              <div class="server-name">
+                NXS-EU-022
+              </div>
+
+              <div class="server-location">
+                Amsterdam / Netherlands
+              </div>
+            </div>
+
+            <div class="server-value">
+              10.18.32.51
+            </div>
+
+            <div class="server-value">
+              14ms
+            </div>
+
+            <div class="server-load">
+              <div class="load-bar">
+                <div
+                  class="load-fill"
+                  style="width:28%"
+                ></div>
+              </div>
+
+              <span class="server-value">
+                28%
+              </span>
+            </div>
+
+            <div class="server-status">
+              Online
+            </div>
+
+          </div>
+
+
+          <div
+            class="server"
+            data-status="offline"
+          >
+
+            <div>
+              <div class="server-name">
+                NXS-AU-003
+              </div>
+
+              <div class="server-location">
+                Sydney / Australia
+              </div>
+            </div>
+
+            <div class="server-value">
+              10.90.2.44
+            </div>
+
+            <div class="server-value">
+              —
+            </div>
+
+            <div class="server-load">
+              <div class="load-bar">
+                <div
+                  class="load-fill"
+                  style="width:0%"
+                ></div>
+              </div>
+
+              <span class="server-value">
+                0%
+              </span>
+            </div>
+
+            <div class="server-status offline">
+              Offline
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FEATURES
+    ====================================================== -->
+
+    <section class="section" id="features">
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <div>
+
+            <div class="eyebrow">
+              Built for engineers
+            </div>
+
+            <h2 class="section-title">
+              Less noise.<br>
+              More signal.
+            </h2>
+
+          </div>
+
+          <p class="section-description">
+            Everything your engineering team needs to
+            understand, troubleshoot and improve production.
+          </p>
+
+        </div>
+
+
+        <div class="features reveal">
+
+          <article class="feature">
+
+            <div class="feature-number">
+              01 / OBSERVABILITY
+            </div>
+
+            <div class="feature-icon">
+              ◉
+            </div>
+
+            <h3 class="feature-title">
+              Full visibility
+            </h3>
+
+            <p class="feature-text">
+              See infrastructure, applications, networks
+              and services through one unified monitoring
+              layer.
+            </p>
+
+          </article>
+
+
+          <article class="feature">
+
+            <div class="feature-number">
+              02 / ALERTING
+            </div>
+
+            <div class="feature-icon">
+              !
+            </div>
+
+            <h3 class="feature-title">
+              Intelligent alerts
+            </h3>
+
+            <p class="feature-text">
+              Detect anomalies before they become incidents
+              and route the right signal to the right person.
+            </p>
+
+          </article>
+
+
+          <article class="feature">
+
+            <div class="feature-number">
+              03 / ANALYTICS
+            </div>
+
+            <div class="feature-icon">
+              ↗
+            </div>
+
+            <h3 class="feature-title">
+              Deep analytics
+            </h3>
+
+            <p class="feature-text">
+              Turn millions of infrastructure events into
+              clear patterns and actionable insights.
+            </p>
+
+          </article>
+
+
+          <article class="feature">
+
+            <div class="feature-number">
+              04 / AUTOMATION
+            </div>
+
+            <div class="feature-icon">
+              ⌁
+            </div>
+
+            <h3 class="feature-title">
+              Automated response
+            </h3>
+
+            <p class="feature-text">
+              Trigger workflows automatically when specific
+              infrastructure conditions are detected.
+            </p>
+
+          </article>
+
+
+          <article class="feature">
+
+            <div class="feature-number">
+              05 / SECURITY
+            </div>
+
+            <div class="feature-icon">
+              ◇
+            </div>
+
+            <h3 class="feature-title">
+              Secure by design
+            </h3>
+
+            <p class="feature-text">
+              Granular access control, encrypted telemetry
+              and complete audit visibility.
+            </p>
+
+          </article>
+
+
+          <article class="feature">
+
+            <div class="feature-number">
+              06 / SCALE
+            </div>
+
+            <div class="feature-icon">
+              +
+            </div>
+
+            <h3 class="feature-title">
+              Built to scale
+            </h3>
+
+            <p class="feature-text">
+              From ten servers to ten thousand nodes,
+              NEXUS grows with your infrastructure.
+            </p>
+
+          </article>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PRICING
+    ====================================================== -->
+
+    <section class="section" id="pricing">
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <div>
+
+            <div class="eyebrow">
+              Pricing
+            </div>
+
+            <h2 class="section-title">
+              Start small.<br>
+              Scale without friction.
+            </h2>
+
+          </div>
+
+          <p class="section-description">
+            Simple plans built around the size of your
+            infrastructure.
+          </p>
+
+        </div>
+
+
+        <div class="pricing reveal">
+
+          <article class="price-card">
+
+            <div class="price-name">
+              Core
+            </div>
+
+            <div class="price">
+              $49 <small>/ month</small>
+            </div>
+
+            <p class="price-description">
+              For small teams monitoring their first
+              production environments.
+            </p>
+
+            <ul class="price-list">
+              <li>Up to 10 nodes</li>
+              <li>7-day data retention</li>
+              <li>Basic alerts</li>
+              <li>Email notifications</li>
+            </ul>
+
+            <button class="btn btn-outline open-modal">
+              Start trial
+            </button>
+
+          </article>
+
+
+          <article class="price-card featured">
+
+            <div class="price-badge">
+              Most popular
+            </div>
+
+            <div class="price-name">
+              Scale
+            </div>
+
+            <div class="price">
+              $149 <small>/ month</small>
+            </div>
+
+            <p class="price-description">
+              For growing engineering teams that need
+              complete visibility.
+            </p>
+
+            <ul class="price-list">
+              <li>Up to 100 nodes</li>
+              <li>90-day data retention</li>
+              <li>Advanced anomaly detection</li>
+              <li>Slack & webhook alerts</li>
+              <li>Team dashboards</li>
+            </ul>
+
+            <button class="btn btn-primary open-modal">
+              Start trial
+            </button>
+
+          </article>
+
+
+          <article class="price-card">
+
+            <div class="price-name">
+              Enterprise
+            </div>
+
+            <div class="price">
+              Custom
+            </div>
+
+            <p class="price-description">
+              For large organizations with complex
+              infrastructure requirements.
+            </p>
+
+            <ul class="price-list">
+              <li>Unlimited nodes</li>
+              <li>Unlimited retention</li>
+              <li>Custom integrations</li>
+              <li>SSO & advanced security</li>
+              <li>Dedicated support</li>
+            </ul>
+
+            <button class="btn btn-outline open-modal">
+              Contact sales
+            </button>
+
+          </article>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FAQ
+    ====================================================== -->
+
+    <section class="section">
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <div>
+
+            <div class="eyebrow">
+              Questions
+            </div>
+
+            <h2 class="section-title">
+              Frequently<br>
+              asked.
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="faq reveal">
+
+          <div class="faq-item">
+
+            <button class="faq-question">
+
+              What can NEXUS monitor?
+
+              <span class="faq-plus">+</span>
+
+            </button>
+
+            <div class="faq-answer">
+
+              <div class="faq-answer-inner">
+                NEXUS can monitor servers, containers,
+                applications, databases, networks,
+                APIs and custom infrastructure metrics.
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="faq-item">
+
+            <button class="faq-question">
+
+              How quickly can I deploy it?
+
+              <span class="faq-plus">+</span>
+
+            </button>
+
+            <div class="faq-answer">
+
+              <div class="faq-answer-inner">
+                Most teams can connect their first
+                infrastructure within minutes using
+                lightweight monitoring agents.
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="faq-item">
+
+            <button class="faq-question">
+
+              Does NEXUS work with cloud infrastructure?
+
+              <span class="faq-plus">+</span>
+
+            </button>
+
+            <div class="faq-answer">
+
+              <div class="faq-answer-inner">
+                Yes. The platform is designed for hybrid
+                infrastructure and can combine cloud,
+                on-premise and edge environments.
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="faq-item">
+
+            <button class="faq-question">
+
+              Can I try it before paying?
+
+              <span class="faq-plus">+</span>
+
+            </button>
+
+            <div class="faq-answer">
+
+              <div class="faq-answer-inner">
+                Yes. Every plan starts with a free trial
+                so your team can connect infrastructure
+                and evaluate the platform.
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         CTA
+    ====================================================== -->
+
+    <section class="cta">
+
+      <div
+        class="glow green"
+        style="right:-300px; top:-400px;"
+      ></div>
+
+      <div
+        class="glow purple"
+        style="left:-400px; bottom:-500px;"
+      ></div>
+
+      <div class="container">
+
+        <div class="cta-content reveal">
+
+          <div class="eyebrow">
+            Ready when you are
+          </div>
+
+          <h2 class="cta-title">
+            KNOW<br>
+            YOUR SYSTEM.
+          </h2>
+
+          <p class="cta-text">
+            Stop guessing what is happening in production.
+            Connect your infrastructure and get a complete
+            picture in minutes.
+          </p>
+
+          <button class="btn btn-primary open-modal">
+            Start monitoring →
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =======================================================
+       FOOTER
+  ======================================================== -->
+
+  <footer>
+
+    <div class="container footer-inner">
+
+      <div class="footer-copy">
+        © 2026 NEXUS SYSTEMS / ALL SYSTEMS OPERATIONAL
+      </div>
+
+      <div class="footer-links">
+        <a href="#platform">Platform</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#servers">Status</a>
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <!-- =======================================================
+       MODAL
+  ======================================================== -->
+
+  <div class="modal" id="modal">
+
+    <div class="modal-box">
+
+      <div class="modal-top">
+
+        <h3 class="modal-title">
+          Start monitoring
+        </h3>
+
+        <button
+          class="modal-close"
+          id="modalClose"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <form class="form" id="demoForm">
+
+        <input
+          type="text"
+          placeholder="Your name"
+          required
+        >
+
+        <input
+          type="email"
+          placeholder="Work email"
+          required
+        >
+
+        <input
+          type="text"
+          placeholder="Company"
+          required
+        >
+
+        <button class="btn btn-primary" type="submit">
+          Request access →
+        </button>
+
+        <div class="form-note">
+          This demo form is part of the NEXUS interface.
+          No real data is transmitted.
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       JAVASCRIPT
+  ======================================================== -->
+
+  <script>
+
+    /* =======================================================
+       HEADER SCROLL
+    ======================================================== */
+
+    const header = document.getElementById("header");
+
+    window.addEventListener("scroll", () => {
+
+      if (window.scrollY > 30) {
+        header.classList.add("scrolled");
+      } else {
+        header.classList.remove("scrolled");
+      }
+
+    });
+
+
+    /* =======================================================
+       REVEAL ANIMATIONS
+    ======================================================== */
+
+    const revealElements =
+      document.querySelectorAll(".reveal");
+
+    const revealObserver =
+      new IntersectionObserver(
+        entries => {
+
+          entries.forEach(entry => {
+
+            if (entry.isIntersecting) {
+
+              entry.target.classList.add("visible");
+
+              revealObserver.unobserve(
+                entry.target
+              );
+
+            }
+
+          });
+
+        },
+        {
+          threshold: .12
+        }
+      );
+
+    revealElements.forEach(element => {
+      revealObserver.observe(element);
+    });
+
+
+    /* =======================================================
+       COUNTERS
+    ======================================================== */
+
+    const counters =
+      document.querySelectorAll("[data-counter]");
+
+    const counterObserver =
+      new IntersectionObserver(
+        entries => {
+
+          entries.forEach(entry => {
+
+            if (!entry.isIntersecting) return;
+
+            const element = entry.target;
+            const target =
+              parseFloat(
+                element.dataset.counter
+              );
+
+            const isDecimal =
+              String(target).includes(".");
+
+            const duration = 1300;
+            const start = performance.now();
+
+            function update(time) {
+
+              const progress =
+                Math.min(
+                  (time - start) / duration,
+                  1
+                );
+
+              const eased =
+                1 - Math.pow(1 - progress, 3);
+
+              const value =
+                target * eased;
+
+              element.textContent =
+                isDecimal
+                  ? value.toFixed(2)
+                  : Math.floor(value);
+
+              if (progress < 1) {
+                requestAnimationFrame(update);
+              }
+
+            }
+
+            requestAnimationFrame(update);
+
+            counterObserver.unobserve(element);
+
+          });
+
+        },
+        {
+          threshold: .7
+        }
+      );
+
+    counters.forEach(counter => {
+      counterObserver.observe(counter);
+    });
+
+
+    /* =======================================================
+       SERVER FILTER
+    ======================================================== */
+
+    const filters =
+      document.querySelectorAll(".filter");
+
+    const servers =
+      document.querySelectorAll(".server");
+
+    filters.forEach(filter => {
+
+      filter.addEventListener("click", () => {
+
+        filters.forEach(item => {
+          item.classList.remove("active");
+        });
+
+        filter.classList.add("active");
+
+        const selected =
+          filter.dataset.filter;
+
+        servers.forEach(server => {
+
+          const status =
+            server.dataset.status;
+
+          if (
+            selected === "all" ||
+            selected === status
+          ) {
+            server.style.display = "grid";
+          } else {
+            server.style.display = "none";
+          }
+
+        });
+
+      });
+
+    });
+
+
+    /* =======================================================
+       FAQ
+    ======================================================== */
+
+    const faqItems =
+      document.querySelectorAll(".faq-item");
+
+    faqItems.forEach(item => {
+
+      const question =
+        item.querySelector(".faq-question");
+
+      question.addEventListener("click", () => {
+
+        const wasOpen =
+          item.classList.contains("open");
+
+        faqItems.forEach(other => {
+          other.classList.remove("open");
+        });
+
+        if (!wasOpen) {
+          item.classList.add("open");
+        }
+
+      });
+
+    });
+
+
+    /* =======================================================
+       MODAL
+    ======================================================== */
+
+    const modal =
+      document.getElementById("modal");
+
+    const modalClose =
+      document.getElementById("modalClose");
+
+    const modalButtons =
+      document.querySelectorAll(".open-modal");
+
+    function openModal() {
+      modal.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      modal.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    modalButtons.forEach(button => {
+      button.addEventListener(
+        "click",
+        openModal
+      );
+    });
+
+    modalClose.addEventListener(
+      "click",
+      closeModal
+    );
+
+    modal.addEventListener(
+      "click",
+      event => {
+
+        if (event.target === modal) {
+          closeModal();
+        }
+
+      }
+    );
+
+    document.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Escape" &&
+          modal.classList.contains("open")
+        ) {
+          closeModal();
+        }
+
+      }
+    );
+
+
+    /* =======================================================
+       FORM
+    ======================================================== */
+
+    const demoForm =
+      document.getElementById("demoForm");
+
+    demoForm.addEventListener(
+      "submit",
+      event => {
+
+        event.preventDefault();
+
+        const button =
+          demoForm.querySelector("button");
+
+        button.textContent =
+          "ACCESS REQUESTED ✓";
+
+        button.style.background =
+          "#48e8ff";
+
+        setTimeout(() => {
+
+          demoForm.reset();
+
+          button.textContent =
+            "Request access →";
+
+          button.style.background =
+            "";
+
+          closeModal();
+
+        }, 1600);
+
+      }
+    );
+
+
+    /* =======================================================
+       TERMINAL RANDOMIZATION
+    ======================================================== */
+
+    const terminalBars =
+      document.querySelectorAll(".terminal-bar");
+
+    setInterval(() => {
+
+      terminalBars.forEach(bar => {
+
+        const height =
+          Math.floor(
+            Math.random() * 70 + 20
+          );
+
+        bar.style.height =
+          height + "%";
+
+      });
+
+    }, 1800);
+
+
+    /* =======================================================
+       LIVE LATENCY
+    ======================================================== */
+
+    const latencyElements =
+      document.querySelectorAll(".server-value");
+
+    setInterval(() => {
+
+      const randomLatency =
+        Math.floor(
+          Math.random() * 15 + 12
+        );
+
+      /*
+        Only visually change latency values
+        that contain "ms".
+      */
+
+      latencyElements.forEach(element => {
+
+        if (
+          element.textContent.trim()
+            .match(/^\d+ms$/)
+        ) {
+
+          const value =
+            Math.floor(
+              randomLatency +
+              Math.random() * 15
+            );
+
+          element.textContent =
+            value + "ms";
+
+        }
+
+      });
+
+    }, 3000);
+
+
+    /* =======================================================
+       MOBILE MENU
+    ======================================================== */
+
+    const menuButton =
+      document.getElementById("menuButton");
+
+    menuButton.addEventListener(
+      "click",
+      () => {
+
+        if (
+          document.querySelector(".mobile-menu")
+        ) {
+          return;
+        }
+
+        const menu =
+          document.createElement("div");
+
+        menu.className =
+          "mobile-menu";
+
+        menu.innerHTML = `
+          <div class="mobile-menu-inner">
+
+            <button class="mobile-close">
+              ×
+            </button>
+
+            <a href="#platform">Platform</a>
+            <a href="#servers">Infrastructure</a>
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+
+          </div>
+        `;
+
+        document.body.appendChild(menu);
+
+        const style =
+          document.createElement("style");
+
+        style.textContent = `
+
+          .mobile-menu {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+            background: rgba(5,6,7,.98);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .mobile-menu-inner {
+            width: 100%;
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+          }
+
+          .mobile-menu a {
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: -.05em;
+          }
+
+          .mobile-menu a:hover {
+            color: var(--lime);
+          }
+
+          .mobile-close {
+            align-self: flex-end;
+            background: transparent;
+            color: white;
+            font-size: 30px;
+            margin-bottom: 30px;
+          }
+
+        `;
+
+        document.head.appendChild(style);
+
+        const close =
+          menu.querySelector(".mobile-close");
+
+        close.addEventListener(
+          "click",
+          () => menu.remove()
+        );
+
+        menu
+          .querySelectorAll("a")
+          .forEach(link => {
+
+            link.addEventListener(
+              "click",
+              () => menu.remove()
+            );
+
+          });
+
+      }
+    );
+
+
+  </script>
+
+</body>
+</html>
+
